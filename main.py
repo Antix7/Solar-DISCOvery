@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import datetime as dt
 from helper_functions import *
+from plotter import *
 
 # conversion of .csv files to pandas dataframe and making one big dataframe of all datasets
 df = pd.DataFrame()
@@ -36,5 +37,6 @@ df['Bz'] = df.apply(lambda row: gse_to_gsm(
     (row['Magnetic_Field_GSE_X'], row['Magnetic_Field_GSE_Y'], row['Magnetic_Field_GSE_Z']),
     row.name)[2], axis=1)
 
-print(df.head())
-print(df.tail())
+start_date = dt.datetime(2016, 7, 1, 0, 0)
+end_date = dt.datetime(2016, 8, 1, 0, 0)
+hourly_timeseries_plot(start_date, end_date, df, 'Bz')
