@@ -6,6 +6,7 @@ import pandas as pd
 # conversion of .csv files to pandas dataframe and making one big dataframe of all datasets
 df = pd.DataFrame()
 for i in range(16, 24):
+    print("Reading dsc_fc_summed_spectra_20{}_v01.csv".format(i))
     current_df = pd.read_csv(
         "data/dsc_fc_summed_spectra_20{}_v01.csv".format(i),
         delimiter=',',
