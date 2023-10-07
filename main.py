@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+# conversion of .csv files to pandas dataframe and making one big dataframe of all datasets
 df = pd.DataFrame()
 for i in range(16, 24):
     current_df = pd.read_csv(
