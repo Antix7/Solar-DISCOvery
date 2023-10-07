@@ -37,6 +37,9 @@ df['Bz'] = df.apply(lambda row: gse_to_gsm(
     (row['Magnetic_Field_GSE_X'], row['Magnetic_Field_GSE_Y'], row['Magnetic_Field_GSE_Z']),
     row.name)[2], axis=1)
 
-start_date = dt.datetime(2016, 7, 1, 0, 0)
-end_date = dt.datetime(2016, 8, 1, 0, 0)
-hourly_timeseries_plot(start_date, end_date, df, 'Bz')
+#start_date = dt.datetime(2016, 7, 1, 0, 0)
+#end_date = dt.datetime(2016, 8, 1, 0, 0)
+#hourly_timeseries_plot(start_date, end_date, df, 'Bz')
+
+# write to .csv file preprocessed data
+df.to_csv("data/data_preprocessed.csv", index=True, header=True)

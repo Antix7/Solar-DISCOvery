@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from datetime import timedelta
 import pandas as pd
 
+# function for plotting hourly time series of Bz parameters
 def hourly_timeseries_plot(start_time, end_time, df, column_name):
     # Resample the data to hourly frequency and take the mean
     df_resampled = df.resample('H').mean()
@@ -18,7 +19,6 @@ def hourly_timeseries_plot(start_time, end_time, df, column_name):
 
     plt.figure(figsize=(10, 1), dpi=300)
     plt.rcParams["font.family"] = "Times New Roman"
-
     plt.plot(times, data, color='black', linewidth=0.5)
     plt.xlim(min(times), max(times))
     plt.xlabel('Time', fontsize = 5)
