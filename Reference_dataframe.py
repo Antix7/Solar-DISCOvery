@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 # Importing and reading .lst files to get Bz, Kp, and Dst data
 # Data is indexed by 'Hour' from 2016.07.01 to 2023.05.01
-df = pd.read_csv('C:\\Users\\zegar\\Desktop\\PytonGigant\\Solar-DISCOvery\\data\\omni2_Qhtwf1siSe.lst', delim_whitespace=True, header=None)
+df = pd.read_csv('data\reference_data.lst', delim_whitespace=True, header=None)
 df.columns = ['Year', 'Day_of_Year', 'Hour', 'Bz_GSM', 'Kp*10', 'Dst_index']
 df['Datetime'] = pd.to_datetime(df['Year'].astype(str) + df['Day_of_Year'].astype(str) + df['Hour'].astype(str), format='%Y%j%H')
 df.set_index('Datetime', inplace=True)
