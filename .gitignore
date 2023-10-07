@@ -161,3 +161,11 @@ cython_debug/
 
 # data folder
 data/
+data/dsc_fc_summed_spectra_2016_v01.csv
+data/dsc_fc_summed_spectra_2017_v01.csv
+data/dsc_fc_summed_spectra_2018_v01.csv
+data/dsc_fc_summed_spectra_2019_v01.csv
+data/dsc_fc_summed_spectra_2020_v01.csv
+data/dsc_fc_summed_spectra_2021_v01.csv
+data/dsc_fc_summed_spectra_2022_v01.csv
+data/dsc_fc_summed_spectra_2023_v01.csv
