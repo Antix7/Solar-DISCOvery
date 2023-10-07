@@ -19,12 +19,13 @@ def hourly_timeseries_plot(start_time, end_time, df, column_name):
     plt.figure(figsize=(10, 1), dpi=300)
     plt.rcParams["font.family"] = "Times New Roman"
 
-    plt.plot(times, data, color='black', linewidth=0.4)
-    plt.xlabel('Time', fontsize = 10)
-    plt.ylabel(column_name, fontsize = 10)
-    plt.xticks(fontsize=8)
-    plt.yticks(fontsize=8)
-    plt.title(f'Time Series Plot of {column_name}')
+    plt.plot(times, data, color='black', linewidth=0.5)
+    plt.xlim(min(times), max(times))
+    plt.xlabel('Time', fontsize = 5)
+    plt.ylabel(column_name, fontsize = 5)
+    plt.xticks(fontsize=4)
+    plt.yticks(fontsize=4)
+    plt.title(f'Time Series Plot of {column_name}', fontsize=7, weight='bold')
     plt.gcf().autofmt_xdate()
     plt.show()
 
