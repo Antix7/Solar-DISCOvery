@@ -19,4 +19,3 @@ df = pd.read_csv("data/processed_data.csv", delimiter=',', parse_dates=[0], na_v
 
 plt.plot(df['Datetime_UTC'], df.iloc[:, 1:11])
 plt.show()
-
