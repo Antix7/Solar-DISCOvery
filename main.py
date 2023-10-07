@@ -31,18 +31,10 @@ magnetic_field_cols = ["Magnetic_Field_GSE_X", "Magnetic_Field_GSE_Y", "Magnetic
 spectrum_cols = [f"Raw_Spectrum_{i}" for i in range(1, 51)]
 df.columns = magnetic_field_cols + spectrum_cols
 
-Bz = np.array([])
-date = dt.datetime(2016, 7, 1, 0, 0)
-while date < dt.datetime(2016, 8, 1, 0, 0):
-    Bz = np.append(Bz, gse_to_gsm(
-        (df.loc[date, 'Magnetic_Field_GSE_X'],
-         df.loc[date, 'Magnetic_Field_GSE_Y'],
-         df.loc[date, 'Magnetic_Field_GSE_Z']),
-        date))
-    date += dt.timedelta(minutes=1)
+print("Adding Bz column...")
+df['Bz'] = df.apply(lambda row: gse_to_gsm(
+    (row['Magnetic_Field_GSE_X'], row['Magnetic_Field_GSE_Y'], row['Magnetic_Field_GSE_Z']),
+    row.name)[2], axis=1)
 
-# take a walking average over a window of 1 hour
-Bz = np.convolve(Bz, np.ones(60)/60, mode='same')
-
-plt.plot(Bz)
-plt.show()
+print(df.head())
+print(df.tail())
