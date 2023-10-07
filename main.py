@@ -9,13 +9,12 @@ from plotter import *
 # import data from csv file
 df = pd.read_csv("data/processed_data.csv", delimiter=',', parse_dates=[0], na_values='0')
 
-# print min values of spectrum columns
-# print(df.iloc[:, 1:].min())
-# print(df.iloc[:, 1:].max())
+print(df.head())
 
-# # plot column Bz using matplotlib
-# plt.plot(df['Datetime_UTC'], df['Bz'])
-# plt.show()
-
-plt.plot(df['Datetime_UTC'], df.iloc[:, 1:11])
-plt.show()
+num_of_gaps = 0
+gaps = []
+for i in range(1, len(df)):
+    if (df.loc[i, 'Datetime_UTC'] - df.loc[i - 1, 'Datetime_UTC']).total_seconds() != 60.0:
+        num_of_gaps += 1
+        gaps.append([df.loc[i, 'Datetime_UTC'], df.loc[i - 1, 'Datetime_UTC']])
+print("Number of gaps: ", num_of_gaps)
