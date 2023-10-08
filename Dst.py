@@ -24,19 +24,19 @@ y_raw.set_index('Datetime', inplace=True)
 
 
 model = tf.keras.Sequential([
-    tf.keras.layers.Conv1D(filters=16, kernel_size=4, strides=2, input_shape=(WINDOW_SIZE, 11)),
-    tf.keras.layers.MaxPooling1D(pool_size=2),
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dropout(0.2),
+    # tf.keras.layers.Conv1D(filters=16, kernel_size=4, strides=2, input_shape=(WINDOW_SIZE, 11)),
+    tf.keras.layers.Flatten(input_shape=(WINDOW_SIZE, 11)),
+    tf.keras.layers.Dense(128, activation="relu"),
+    tf.keras.layers.Dense(64, activation="relu"),
     tf.keras.layers.Dense(32, activation="relu"),
-    tf.keras.layers.Dropout(0.2),
-    tf.keras.layers.Dense(1, activation="sigmoid")  # Kp index
+    tf.keras.layers.Dense(1, activation="tanh")  # Dst index
 ])
+
 
 model.summary()
 
 
-loss_fn = tf.keras.losses.MeanSquaredError()
+loss_fn = tf.keras.losses.MeanAbsoluteError()
 optimizer = tf.keras.optimizers.Adam()
 model.compile(optimizer=optimizer,
               loss=loss_fn,
@@ -53,19 +53,20 @@ def get_dataset(df, param):
     )
 
 
-NUM_EPOCHS = 2
+NUM_EPOCHS = 4
 for df in training_data:
-    dataset = get_dataset(df, "Kp")
+    dataset = get_dataset(df, "Dst_index")
     if len(dataset) == 0:
         continue
     model.fit(dataset, epochs=NUM_EPOCHS)
 
 
-dataset = get_dataset(testing_data[0], "Kp")
-model.evaluate(dataset, verbose=2)  # [loss, mean_absolute_error]SS
+dataset = get_dataset(testing_data[0], "Dst_index")
+model.evaluate(dataset, verbose=2)  # [loss, mean_absolute_error]
 
 
 predictions = model.predict(dataset)
+print(predictions)
 delta_t = dt.timedelta(minutes=WINDOW_SIZE-FORECAST_MINUTES)
 begin = testing_data[0].index[0].to_pydatetime()-delta_t
 end = testing_data[0].index[-1].to_pydatetime()-delta_t
@@ -73,8 +74,8 @@ end = testing_data[0].index[-1].to_pydatetime()-delta_t
 
 line_width = 1
 plt.figure(figsize=(10, 5), dpi=100)
-plt.plot(predictions, label="Predicted Kp", linewidth=line_width, color="green")
-plt.plot(list(range(len(testing_data[0]))), y_raw["Kp"][begin:end], label="Actual Kp", linewidth=line_width, color="red")
+plt.plot(predictions, label="Predicted Dst", linewidth=line_width, color="blue")
+plt.plot(list(range(len(testing_data[0]))), y_raw["Dst_index"][begin:end], label="Actual Dst", linewidth=line_width, color="purple")
 
 
 plt.legend()
