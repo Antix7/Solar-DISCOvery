@@ -32,7 +32,7 @@ model = tf.keras.Sequential([
     tf.keras.layers.Dropout(0.2),
     tf.keras.layers.Dense(32, activation="relu"),
     tf.keras.layers.Dropout(0.2),
-    tf.keras.layers.Dense(1, activation="sigmoid")  # Kp index
+    tf.keras.layers.Dense(1, activation="sigmoid")  # Dst index
 ])
 
 
