@@ -1,50 +1,71 @@
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import datetime as dt
+import matplotlib.pyplot as plt
 
-# importing data from .csv file
-df = pd.read_csv('data/processed_data.csv')
+# reading .csv file
+df = pd.read_csv("C:\\Users\\zegar\\Desktop\\PytonGigant\\data\\processed_data.csv")
 
-# Convert to datetime and set as index
+# Convert Datetime_UTC to datetime type
 df['Datetime_UTC'] = pd.to_datetime(df['Datetime_UTC'])
+
+# Set Datetime_UTC as the index
 df.set_index('Datetime_UTC', inplace=True)
 
-# Drop duplicates based on the index (Datetime_UTC)
-df = df[~df.index.duplicated(keep='first')]
+# Resample dataframe to minute frequency, aggregate by mean if multiple datapoints
+df_resampled = df.resample('T').mean()
 
-# Resample to ensure every minute is present
-df_resampled = df.resample('T').asfreq()
-df_resampled = df_resampled.replace(0, np.nan)
+# Step 1: Identify where data is missing (NaN) 
+# by using the 'isna()' method and get the differences in rows 
+df_resampled['gap'] = df_resampled.isna().all(axis=1).astype(int).diff()
 
-# Linearly interpolate gaps shorter than 2 hours for all columns
-df_resampled.interpolate(method='linear', limit=60, limit_direction='both', inplace=True)
+# Step 2: Group consecutive missing data
+start_gaps = df_resampled[df_resampled['gap'] == 1].index
+end_gaps = df_resampled[df_resampled['gap'] == -1].index
 
-# Create a 'missing' column: 1 for missing data and 0 otherwise
-df_resampled['missing'] = df_resampled.isnull().all(axis=1).astype(int)
+if len(start_gaps) > len(end_gaps):  # If the last gap goes till the end of the dataset
+    end_gaps = end_gaps.insert(len(end_gaps), df_resampled.index[-1])
 
-# Compute the sum of flux for every minute and divide by 10
-df_resampled['flux_sum'] = df_resampled.drop(columns='missing').sum(axis=1) / 10
+if len(start_gaps) < len(end_gaps):  # If there's a gap at the beginning of the dataset
+    start_gaps = start_gaps.insert(0, df_resampled.index[0])
 
-# Identify gaps (whole groups of consecutive missing datapoints)
-gap_groups = (df_resampled['missing'] != df_resampled['missing'].shift()).cumsum()
-gap_counts = df_resampled[df_resampled['missing'] == 1].groupby(gap_groups).size()
+# ... [Your code above for gap detection remains unchanged]
 
-# Print the number of gaps and their sizes
-print(f"Number of data gaps: {len(gap_counts)}")
-print("Sizes of the gaps:", gap_counts.tolist())
+# Storing gap information
+gap_info = []
+for start, end in zip(start_gaps, end_gaps):
+    gap_length = (end - start).seconds // 60 + 1  # in minutes
+    gap_info.append((start, end, gap_length))
+    if gap_length > 120:
+        print(f"Gap from {start} to {end} of length {gap_length} minutes")
 
-# Plotting
-plt.figure(figsize=(15, 5))
-df_resampled['flux_sum'].plot(label='Interpolated Data', linewidth=1)
 
-# Add scatter plot for missing points
-missing_points = df_resampled[df_resampled['missing'] == 1]
-plt.scatter(missing_points.index, missing_points['flux_sum'], color='red', s=10, label='Missing Data Points')
+# ... [Everything above remains unchanged until interpolation]
 
-plt.title('Linearly Interpolated Minute Flux Sum Data (divided by 10) with Missing Points')
-plt.ylabel('Sum of Flux / 10')
-plt.xlabel('Datetime')
-plt.legend()
-plt.tight_layout()
-plt.show()
+# Drop the 'gap' column before summing
+df_resampled.drop(columns=['gap'], inplace=True)
+
+# Interpolating for gaps below 120 minutes on the summed data
+for start, end, length in gap_info:
+    if length <= 120:
+        df_resampled['Bz'].loc[start:end] = df_resampled['Bz'].loc[start:end].interpolate(method='linear', limit_direction='both').bfill().ffill()
+        for i in range(10):
+            column = f'Spectrum_Sum_{i}'
+            df_resampled[column].loc[start:end] = df_resampled[column].loc[start:end].interpolate(method='linear', limit_direction='both').bfill().ffill()
+
+spectrum_cols = [f'Spectrum_Sum_{i}' for i in range(10)]
+df_resampled['Flux_sum'] = df_resampled[spectrum_cols].sum(axis=1) / 10
+
+
+# Plotting the interpolated sum over time
+# plt.figure(figsize=(14, 7))  # Adjust the figure size
+# plt.plot(df_resampled.index, df_resampled['Flux_sum'], label='Interpolated Sum of Parameters', color='green')
+# plt.xlabel('Datetime_UTC')
+# plt.ylabel('Sum')
+# plt.title('Interpolated Sum of All Parameters Over Time')
+# plt.legend()
+# plt.grid(True)
+# plt.tight_layout()
+# plt.show()
+
+df_resampled.to_csv('data/processed_data_interpolated.csv')
