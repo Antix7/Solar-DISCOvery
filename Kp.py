@@ -37,7 +37,7 @@ model = tf.keras.Sequential([
 model.summary()
 
 
-loss_fn = tf.keras.losses.MeanSquaredError()
+loss_fn = tf.keras.losses.MeanAbsoluteError()
 optimizer = tf.keras.optimizers.Adam()
 model.compile(optimizer=optimizer,
               loss=loss_fn,
@@ -80,3 +80,6 @@ plt.plot(list(range(len(testing_data[0]))), y_raw["Kp"][begin:end], label="Actua
 
 plt.legend()
 plt.show()
+
+# save model
+model.save('models/Kp_model.keras')
