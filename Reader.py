@@ -3,11 +3,12 @@ import io
 with pd.HDFStore('dataframes.h5') as store:
     dfs_from_h5 = [store[key] for key in store.keys()]
 
-# Check if DataFrames were loaded
-print(f"Number of DataFrames loaded: {len(dfs_from_h5)}")
+
+# Sort dfs based on their size (max size first)
+dfs_from_h5_sorted = sorted(dfs_from_h5, key=len, reverse=True)
 
 # Check results
-for df in dfs_from_h5:
+for df in dfs_from_h5_sorted:
     print(df)
     print("-" * 50)
 
