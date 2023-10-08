@@ -19,17 +19,20 @@ testing_data = dfs[:1]
 training_data = dfs[1:]
 
 y_raw = pd.read_csv("data/reference_neuron_data.csv", delimiter=',', parse_dates=[0], na_values='0')
+# change Dst_index to (self+1)/2
+y_raw['Dst_index'] = (y_raw['Dst_index']+1)/2
 y_raw['Datetime'] = pd.to_datetime(y_raw['Datetime'])
 y_raw.set_index('Datetime', inplace=True)
 
 
 model = tf.keras.Sequential([
-    # tf.keras.layers.Conv1D(filters=16, kernel_size=4, strides=2, input_shape=(WINDOW_SIZE, 11)),
-    tf.keras.layers.Flatten(input_shape=(WINDOW_SIZE, 11)),
-    tf.keras.layers.Dense(128, activation="relu"),
-    tf.keras.layers.Dense(64, activation="relu"),
+    tf.keras.layers.Conv1D(filters=16, kernel_size=4, strides=2, input_shape=(WINDOW_SIZE, 11)),
+    tf.keras.layers.MaxPooling1D(pool_size=2),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dropout(0.2),
     tf.keras.layers.Dense(32, activation="relu"),
-    tf.keras.layers.Dense(1, activation="tanh")  # Dst index
+    tf.keras.layers.Dropout(0.2),
+    tf.keras.layers.Dense(1, activation="sigmoid")  # Kp index
 ])
 
 
@@ -53,7 +56,7 @@ def get_dataset(df, param):
     )
 
 
-NUM_EPOCHS = 4
+NUM_EPOCHS = 1
 for df in training_data:
     dataset = get_dataset(df, "Dst_index")
     if len(dataset) == 0:
@@ -74,9 +77,12 @@ end = testing_data[0].index[-1].to_pydatetime()-delta_t
 
 line_width = 1
 plt.figure(figsize=(10, 5), dpi=100)
-plt.plot(predictions, label="Predicted Dst", linewidth=line_width, color="blue")
-plt.plot(list(range(len(testing_data[0]))), y_raw["Dst_index"][begin:end], label="Actual Dst", linewidth=line_width, color="purple")
+plt.plot((predictions*2-1)*3, label="Predicted Dst", linewidth=line_width, color="blue")
+plt.plot(list(range(len(testing_data[0]))), y_raw["Dst_index"][begin:end]*2-1, label="Actual Dst", linewidth=line_width, color="purple")
 
 
 plt.legend()
 plt.show()
+
+# save model
+model.save('models/Dst_model.keras')
