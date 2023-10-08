@@ -12,32 +12,16 @@ BATCH_SIZE = 64*4
 STRIDE = 1
 FORECAST_MINUTES = 60
 
-# import data from csv file
-nrows = 1000000
-x_raw = pd.read_csv("data/processed_data_interpolated.csv", delimiter=',', parse_dates=[0], na_values='0')
+with pd.HDFStore('dataframes.h5') as store:
+    dfs = [store[key] for key in store.keys()]
+
+dfs.sort(key=lambda x: len(x), reverse=True)
+testing_data = dfs[:1]
+training_data = dfs[1:]
+
 y_raw = pd.read_csv("data/reference_neuron_data.csv", delimiter=',', parse_dates=[0], na_values='0')
-
-x_raw = x_raw.iloc[:, 1:-1].fillna(0)
-y_raw = y_raw.iloc[:, 1:].fillna(0)
-
-# cut off first rows from y_raw
-y_raw = y_raw.iloc[(FORECAST_MINUTES+WINDOW_SIZE):, :]
-# cut off last rows from x_raw
-x_raw = x_raw.iloc[:-(FORECAST_MINUTES+WINDOW_SIZE), :]
-
-# print(x_raw.shape, y_raw.shape)
-
-
-def get_dataset(a=0, b=-1):
-    return tf.keras.utils.timeseries_dataset_from_array(
-        x_raw[a:b], y_raw["Kp"][a:b], sequence_length=WINDOW_SIZE, sequence_stride=STRIDE, batch_size=BATCH_SIZE
-    )
-
-
-TRAIN_SIZE = 500000
-TEST_SIZE = 200000
-train_dataset = get_dataset(0, TRAIN_SIZE)
-test_dataset = get_dataset(TRAIN_SIZE, TRAIN_SIZE+TEST_SIZE)
+y_raw['Datetime'] = pd.to_datetime(y_raw['Datetime'])
+y_raw.set_index('Datetime', inplace=True)
 
 
 model = tf.keras.Sequential([
@@ -52,24 +36,46 @@ model = tf.keras.Sequential([
 
 model.summary()
 
-loss_fn = tf.keras.losses.MeanSquaredError()
 
+loss_fn = tf.keras.losses.MeanSquaredError()
 optimizer = tf.keras.optimizers.Adam()
 model.compile(optimizer=optimizer,
               loss=loss_fn,
               metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
-model.fit(train_dataset, epochs=5)
 
-model.evaluate(test_dataset, verbose=2)
+def get_dataset(df, param):
+    begin = df.index[0].to_pydatetime()
+    end = df.index[-1].to_pydatetime()
+    delta_t = dt.timedelta(minutes=WINDOW_SIZE - FORECAST_MINUTES)
+    train_y = y_raw.fillna(0).loc[(begin - delta_t):(end - delta_t), param]
+    return tf.keras.utils.timeseries_dataset_from_array(
+        df.iloc[:, :].fillna(0), train_y, sequence_length=WINDOW_SIZE, sequence_stride=STRIDE, batch_size=BATCH_SIZE
+    )
 
-# make predictions for first batch of test data
-predictions = model.predict(test_dataset)
+
+NUM_EPOCHS = 2
+for df in training_data:
+    dataset = get_dataset(df, "Kp")
+    if len(dataset) == 0:
+        continue
+    model.fit(dataset, epochs=NUM_EPOCHS)
 
 
-line_width = 0.75
-plt.plot(predictions, label="Predicted Kp", linewidth=line_width)
-plt.plot(list(range(TEST_SIZE)), y_raw["Kp"][TRAIN_SIZE:TRAIN_SIZE+TEST_SIZE], label="Actual Kp", linewidth=line_width)
+dataset = get_dataset(testing_data[0], "Kp")
+model.evaluate(dataset, verbose=2)  # [loss, mean_absolute_error]SS
+
+
+predictions = model.predict(dataset)
+delta_t = dt.timedelta(minutes=WINDOW_SIZE-FORECAST_MINUTES)
+begin = testing_data[0].index[0].to_pydatetime()-delta_t
+end = testing_data[0].index[-1].to_pydatetime()-delta_t
+
+
+line_width = 1
+plt.figure(figsize=(10, 5), dpi=100)
+plt.plot(predictions, label="Predicted Kp", linewidth=line_width, color="green")
+plt.plot(list(range(len(testing_data[0]))), y_raw["Kp"][begin:end], label="Actual Kp", linewidth=line_width, color="red")
 
 
 plt.legend()
