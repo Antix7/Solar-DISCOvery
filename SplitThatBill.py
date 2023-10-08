@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import datetime as dt
 
 # reading.csv file
-df = pd.read_csv("C:\\Users\\zegar\\Desktop\\PytonGigant\\data\\processed_data_interpolated.csv")
+df = pd.read_csv("data/processed_data_interpolated.csv")
 df.drop(columns=['Flux_sum'], inplace=True)
 
 df['Datetime_UTC'] = pd.to_datetime(df['Datetime_UTC'])
